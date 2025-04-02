@@ -6,8 +6,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.action.openPopup();
   }
   
+  
   if (message.action === "updateProduct" && message.productInfo) {
     // Actualizar la información del producto
     chrome.storage.local.set({ currentProduct: message.productInfo });
-  }
+  }    
 });
