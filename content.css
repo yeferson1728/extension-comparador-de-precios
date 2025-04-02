@@ -1,0 +1,29 @@
+#price-compare-button {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #4CAF50;
+  color: white;
+  padding: 15px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  transition: all 0.3s ease;
+}
+
+#price-compare-button:hover {
+  transform: scale(1.1);
+  background-color: #45a049;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+#price-compare-button:active {
+  transform: scale(0.95);
+}
