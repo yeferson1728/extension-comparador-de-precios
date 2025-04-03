@@ -127,3 +127,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   refreshButton.addEventListener("click", updateProductInfo);
   priceContainer.addEventListener("dblclick", showHistory);
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    chrome.storage.local.get(['currentProduct'], (result) => {
+        const productInfo = result.currentProduct;
+        if (productInfo) {
+            displayProduct(productInfo);
+        } else {
+            document.getElementById('productInfo').innerHTML = 'No product information available';
+        }
+    });
+});
+
+function displayProduct(product) {
+    const productDiv = document.getElementById('productInfo');
+    productDiv.innerHTML = `
+        <div class="product-card">
+            ${product.image ? `<img src="${product.image}" style="max-width: 100px;">` : ''}
+            <h3>${product.title}</h3>
+            <p class="price">${product.currency} ${product.price}</p>
+            <p>Store: ${product.siteName}</p>
+            <a href="${product.url}" target="_blank">View Product</a>
+        </div>
+    `;
+}

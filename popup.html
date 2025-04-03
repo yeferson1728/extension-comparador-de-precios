@@ -1,53 +1,26 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comparador de Precios</title>
-    <link rel="stylesheet" href="popup.css">
+    <title>Price Comparator</title>
+    <style>
+        body {
+            width: 300px;
+            padding: 10px;
+        }
+        .product-card {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 5px 0;
+        }
+        .price {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <h1>Comparador de Precios</h1>
-    
-    <div class="product-card">
-        <img class="product-image" id="product-image" src="placeholder.png" alt="Producto">
-        <h2 class="product-title" id="product-title">Nombre del Producto</h2>
-        <div id="price-container" class="no-price">
-            <span id="current-price">Cargando precios...</span>
-            <div class="loader"></div>
-        </div>
-    </div>
-
-    <div class="comparison-table">
-        <table>
-            <thead>
-                <tr>
-                    <th>Tienda</th>
-                    <th>Precio</th>
-                </tr>
-            </thead>
-            <tbody id="price-comparison">
-                <tr>
-                    <td>Amazon</td>
-                    <td>--</td>
-                </tr>
-                <tr>
-                    <td>eBay</td>
-                    <td>--</td>
-                </tr>
-                <tr>
-                    <td>MercadoLibre</td>
-                    <td>--</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <button id="refresh-button">
-        <span>Actualizar Precios</span>
-        <div class="loader"></div>
-    </button>
-
+    <div id="productInfo">Loading...</div>
     <script src="popup.js"></script>
 </body>
 </html>
