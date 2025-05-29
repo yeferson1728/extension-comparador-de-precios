@@ -1,26 +1,22 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Price Comparator</title>
-    <style>
-        body {
-            width: 300px;
-            padding: 10px;
-        }
-        .product-card {
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin: 5px 0;
-        }
-        .price {
-            color: #4CAF50;
-            font-weight: bold;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Comparador de Precios</title>
+  <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-    <div id="productInfo">Loading...</div>
-    <script src="popup.js"></script>
+  <h1>Comparador de Precios</h1>
+  <div class="product-card">
+    <img id="product-image" class="product-image" src="" alt="Imagen del producto" />
+    <div id="product-title" class="product-title"></div>
+    <div id="price-container">
+      <span id="current-price"></span>
+    </div>
+  </div>
+  <button id="refresh-button">Actualizar</button>
+  <div id="price-comparison"></div>
+  <div id="loader" class="loader" style="display:none;"></div>
+  <script src="popup.js"></script>
 </body>
 </html>

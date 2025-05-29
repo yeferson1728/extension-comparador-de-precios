@@ -5,149 +5,110 @@ document.addEventListener("DOMContentLoaded", async () => {
   const productImage = document.getElementById("product-image");
   const priceComparison = document.getElementById("price-comparison");
   const refreshButton = document.getElementById("refresh-button");
+  const loader = document.getElementById("loader");
 
-  function updateProductInfo() {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      chrome.scripting.executeScript(
-        {
-          target: { tabId: tabs[0].id },
-          function: getProductInfo,
+  async function comparePrices(productName) {
+    loader.style.display = "block";
+
+    try {
+      const res = await fetch("http://localhost:3000/api/scrape", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        (result) => {
-          if (result && result[0] && result[0].result) {
-            const productInfo = result[0].result;
-            
-            // Actualizar información del producto
-            currentPrice.textContent = `$${productInfo.price}`;
-            productTitle.textContent = productInfo.title;
-            if (productInfo.image) {
-              productImage.src = productInfo.image;
-            }
-            
-            priceContainer.classList.remove("no-price");
-            
-            // Guardar información en el historial
-            saveProductInfo(productInfo);
-            
-            // Actualizar tabla de comparación
-            updatePriceComparison(productInfo);
-          } else {
-            currentPrice.textContent = "Precio no disponible";
-            priceContainer.classList.add("no-price");
-          }
-        }
-      );
-    });
-  }
-
-  function saveProductInfo(productInfo) {
-    chrome.storage.local.get(["productHistory"], (data) => {
-      let history = data.productHistory || [];
-      history.push({
-        ...productInfo,
-        date: new Date().toISOString()
+        body: JSON.stringify({
+          product: productName,
+          store: "amazon", // puedes cambiar por "amazon", "mercadolibre", etc.
+        }),
       });
 
-      if (history.length > 10) history.shift();
-      chrome.storage.local.set({ productHistory: history });
-    });
-  }
+      const data = await res.json();
+      const results = data.results || [];
 
-  function updatePriceComparison(currentProduct) {
-    chrome.storage.local.get(["productHistory"], (data) => {
-      const history = data.productHistory || [];
-      const stores = ['Amazon', 'eBay', 'MercadoLibre'];
-      
-      let pricesByStore = stores.map(store => {
-        const storeProducts = history.filter(p => p.siteName.includes(store.toLowerCase()));
-        const latestPrice = storeProducts.length > 0 ? 
-          storeProducts[storeProducts.length - 1].price : '--';
-        return `<tr>
-          <td>${store}</td>
-          <td>$${latestPrice}</td>
-        </tr>`;
-      });
-
-      priceComparison.innerHTML = pricesByStore.join('');
-    });
-  }
-
-  function showHistory() {
-    chrome.storage.local.get(["productHistory"], (data) => {
-      const history = data.productHistory || [];
-      if (history.length === 0) {
-        alert("No hay historial disponible.");
-        return;
-      }
-
-      const historyText = history.map(p => 
-        `${new Date(p.date).toLocaleDateString()}\n` +
-        `${p.title}\n` +
-        `Precio: $${p.price}\n` +
-        `Tienda: ${p.siteName}\n` +
-        "-------------------"
-      ).join("\n");
-
-      alert("Historial de Productos:\n" + historyText);
-    });
-  }
-
-  // Función que extrae la información del producto de la página
-  function getProductInfo() {
-    const info = {
-      price: null,
-      title: null,
-      image: null,
-      siteName: window.location.hostname
-    };
-
-    if (info.siteName.includes("amazon")) {
-      info.price = document.querySelector("#priceblock_ourprice, #priceblock_dealprice, .a-price-whole, .a-price span");
-      info.title = document.querySelector("#productTitle");
-      info.image = document.querySelector("#landingImage");
-    } else if (info.siteName.includes("ebay")) {
-      info.price = document.querySelector(".x-price-primary span, .notranslate");
-      info.title = document.querySelector(".x-item-title");
-      info.image = document.querySelector(".img img");
-    } else if (info.siteName.includes("mercadolibre")) {
-      info.price = document.querySelector(".ui-pdp-price__second-line span, .price-tag-fraction");
-      info.title = document.querySelector(".ui-pdp-title");
-      info.image = document.querySelector(".ui-pdp-gallery__figure img");
+      priceComparison.innerHTML = `
+        <table class="comparison-table">
+          <tr>
+            <th>Tienda</th>
+            <th>Producto</th>
+            <th>Precio</th>
+            <th>Ir</th>
+          </tr>
+          ${results
+            .map(
+              (r) => `
+            <tr>
+              <td>${r.store}</td>
+              <td>${r.title || "N/A"}</td>
+              <td>${r.price || "No disponible"}</td>
+              <td><a href="${r.url}" target="_blank">Ver</a></td>
+            </tr>
+          `
+            )
+            .join("")}
+        </table>
+      `;
+    } catch (err) {
+      console.error("Error al obtener precios del backend:", err);
+      priceComparison.innerHTML = "<p>Error al obtener precios</p>";
+    } finally {
+      loader.style.display = "none";
     }
-
-    return {
-      price: info.price ? info.price.innerText.replace(/[^0-9.,]/g, "").trim() : "No disponible",
-      title: info.title ? info.title.innerText.trim() : "Sin título",
-      image: info.image ? info.image.src : null,
-      siteName: info.siteName
-    };
   }
 
-  updateProductInfo();
-  refreshButton.addEventListener("click", updateProductInfo);
-  priceContainer.addEventListener("dblclick", showHistory);
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    chrome.storage.local.get(['currentProduct'], (result) => {
-        const productInfo = result.currentProduct;
-        if (productInfo) {
-            displayProduct(productInfo);
-        } else {
-            document.getElementById('productInfo').innerHTML = 'No product information available';
+  function loadProductInfo(callback) {
+    chrome.storage.local.get(["currentProduct"], (data) => {
+      const productInfo = data.currentProduct;
+      if (productInfo) {
+        currentPrice.textContent = productInfo.price
+          ? `${productInfo.currency} ${productInfo.price}`
+          : "Precio no disponible";
+        productTitle.textContent = productInfo.title;
+        if (productInfo.image) productImage.src = productInfo.image;
+        priceContainer.classList.toggle("no-price", !productInfo.price);
+        if (callback) callback(productInfo);
+      } else {
+        currentPrice.textContent = "Precio no disponible";
+        priceContainer.classList.add("no-price");
+        priceComparison.innerHTML = "";
+      }
+      chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+        if (msg.productInfo) {
+          updatePopupUI(msg.productInfo);
+          fetchStoresForCountry(msg.productInfo.countryCode);
         }
-    });
-});
+      });
 
-function displayProduct(product) {
-    const productDiv = document.getElementById('productInfo');
-    productDiv.innerHTML = `
-        <div class="product-card">
-            ${product.image ? `<img src="${product.image}" style="max-width: 100px;">` : ''}
-            <h3>${product.title}</h3>
-            <p class="price">${product.currency} ${product.price}</p>
-            <p>Store: ${product.siteName}</p>
-            <a href="${product.url}" target="_blank">View Product</a>
-        </div>
-    `;
-}
+      function fetchStoresForCountry(code) {
+        fetch(chrome.runtime.getURL("data/stores.js"))
+          .then((res) => res.json())
+          .then((data) => {
+            const stores = data[code] || [];
+            displayStoreSuggestions(stores);
+          });
+      }
+    });
+  }
+
+  refreshButton.addEventListener("click", () => {
+    loader.style.display = "block";
+
+    chrome.runtime.sendMessage({ action: "requestProductInfo" }, (response) => {
+      loader.style.display = "none";
+
+      if (response && response.productInfo) {
+        loadProductInfo((productInfo) => {
+          comparePrices(productInfo.title);
+        });
+      } else {
+        priceComparison.innerHTML =
+          "<p>No se pudo obtener información del producto.</p>";
+      }
+    });
+  });
+
+  loadProductInfo((productInfo) => {
+    if (productInfo && productInfo.title) {
+      comparePrices(productInfo.title);
+    }
+  });
+});
